@@ -1,6 +1,9 @@
 package com.trivago.nytimestest.view;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -8,36 +11,28 @@ import android.os.Bundle;
 import android.os.Handler;
 //import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.trivago.nytimestest.R;
 import com.trivago.nytimestest.core.DataManager;
+import com.trivago.nytimestest.core.PopupController;
 import com.trivago.nytimestest.domain.NytCallback;
+import com.trivago.nytimestest.view.main.MainActivity;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
 public class LaunchActivity extends AppCompatActivity implements NytCallback {
-//    /**
-//     * Whether or not the system UI should be auto-hidden after
-//     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-//     */
-//    private static final boolean AUTO_HIDE = true;
-
-//    /**
-//     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-//     * user interaction before hiding the system UI.
-//     */
-//    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
     /**
      * Some older devices needs a small delay between UI widget updates
      * and a change of the status and navigation bar.
      */
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
-    private View mContentView;
+    private VideoView mVideoView;
+    private TextView mLabelView;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -47,7 +42,7 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
             // Note that some of these constants are new as of API 16 (Jelly Bean)
             // and API 19 (KitKat). It is safe to use them, as they are inlined
             // at compile-time and do nothing on earlier devices.
-            mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+            mVideoView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -55,7 +50,6 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
-//    private View mControlsView;
     private final Runnable mShowPart2Runnable = new Runnable() {
         @Override
         public void run() {
@@ -64,7 +58,6 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
             if (actionBar != null) {
                 actionBar.show();
             }
-//            mControlsView.setVisibility(View.VISIBLE);
         }
     };
     private boolean mVisible;
@@ -74,20 +67,9 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
             hide();
         }
     };
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-//    private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-//        @Override
-//        public boolean onTouch(View view, MotionEvent motionEvent) {
-//            if (AUTO_HIDE) {
-//                delayedHide(AUTO_HIDE_DELAY_MILLIS);
-//            }
-//            return false;
-//        }
-//    };
+
+    private boolean isVideoFinished;
+    private boolean isRequestFinished;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,22 +81,25 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
         DataManager.getInstance().loadMostViewed();
 
         mVisible = true;
-//        mControlsView = findViewById(R.id.fullscreen_content_controls);
-        mContentView = findViewById(R.id.videoView);//(R.id.fullscreen_content);
-
+        mVideoView = (VideoView)findViewById(R.id.videoView);
+        mLabelView = (TextView)findViewById(R.id.txt_label);
 
         // Set up the user interaction to manually show or hide the system UI.
-        mContentView.setOnClickListener(new View.OnClickListener() {
+        mVideoView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 toggle();
             }
         });
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-//        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        mVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                isVideoFinished = true;
+                if (!isRequestFinished) return;
+                startActivity(new Intent(LaunchActivity.this, MainActivity.class));
+                finish();
+            }
+        });
     }
 
     @Override
@@ -131,8 +116,12 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
     protected void onStart() {
         super.onStart();
         String uri = "android.resource://" + getPackageName() + "/" + R.raw.splash;
-        ((VideoView)mContentView).setVideoURI(Uri.parse(uri));
-        ((VideoView)mContentView).start();
+        mVideoView.setVideoURI(Uri.parse(uri));
+        mVideoView.start();
+
+        ObjectAnimator anim = ObjectAnimator.ofFloat(mLabelView, "alpha", 0f, 1f);
+        anim.setDuration(4000);
+        anim.start();
     }
 
     private void toggle() {
@@ -160,7 +149,7 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
     @SuppressLint("InlinedApi")
     private void show() {
         // Show the system bar
-        mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        mVideoView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         mVisible = true;
 
@@ -180,9 +169,14 @@ public class LaunchActivity extends AppCompatActivity implements NytCallback {
 
     @Override
     public void onResponse(boolean successful) {
-//        if (successful)
-            //TODO show main screen
-//        else
-            //TODO show error
+        isRequestFinished = true;
+        if (successful) {
+            if (!isVideoFinished) return;
+            startActivity(new Intent(LaunchActivity.this, MainActivity.class));
+            finish();
+        }
+        else {
+            PopupController.showMessage(this, DataManager.getInstance().getErrorMessage());
+        }
     }
 }

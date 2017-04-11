@@ -2,13 +2,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="@dimen/margin0"
     tools:context="com.trivago.nytimestest.view.main.MainFragment">
 
     <EditText
         android:id="@+id/field_search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"/>
+        android:layout_alignParentTop="true"
+        android:hint="@string/search_hint"
+        android:inputType="text"
+        android:lines="1"
+        android:maxLines="1"
+        android:imeOptions="actionDone"
+        android:imeActionLabel="@string/search"/>
 
     <FrameLayout
         android:layout_width="match_parent"

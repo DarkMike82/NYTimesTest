@@ -13,6 +13,21 @@
         android:gravity="center"
         android:keepScreenOn="true" />
 
+    <TextView
+        android:id="@+id/txt_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginLeft="@dimen/margin2"
+        android:layout_marginRight="@dimen/margin2"
+        android:layout_marginBottom="@dimen/label_offset"
+        android:gravity="center"
+        android:alpha="0.0"
+        android:text="@string/welcome"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:textSize="@dimen/label_font"/>
+
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->

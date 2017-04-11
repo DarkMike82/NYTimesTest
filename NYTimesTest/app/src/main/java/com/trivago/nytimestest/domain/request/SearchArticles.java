@@ -9,15 +9,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Created by Michael Dontsov on 08.04.2017.
+ * Request for article search
  */
 
 public class SearchArticles extends NytRequest {
+    private static final String NYT_FILE_HOST = "https://static01.nyt.com/";
+    private static final String DATE_PATTERN1 = "yyyy-MM-dd'T'HH:mm:ssZ";
+    private static final String DATE_PATTERN2 = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
     public SearchArticles() {
-        mRawDatePattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-        mResultsKey = "docs";
+        mRawDatePattern = DATE_PATTERN1;
     }
 
     @Override
@@ -31,30 +36,62 @@ public class SearchArticles extends NytRequest {
     }
 
     @Override
+    protected List<Article> parseJson(String jsonString) {
+        List<Article> articles;
+        try {
+            JSONObject response = getObject(new JSONObject(jsonString), "response");
+            JSONArray items = response == null ? null : getArray(response, "docs");
+            if (items == null)
+                return null;
+            articles = new ArrayList<>();
+            for (int i = 0; i < items.length(); i++) {
+                Article art = parseItem(items.getJSONObject(i));
+                if (art != null)
+                    articles.add(art);
+            }
+            return articles;
+        }
+        catch (JSONException e){
+            e.printStackTrace();
+            mErrorMsg = e.getMessage();
+        }
+        return null;
+    }
+
+    @Override
     protected Article parseItem(JSONObject articleJson){
         try {
             Article art = new Article();
-            art.setTitle(articleJson.getJSONObject("headline").getString("main"));
-            art.setByLine(articleJson.getJSONObject("byline").getString("original"));
-            art.setPublishedDate(parseDate(articleJson.getString("pub_date")));
+            art.setTitle(getObjectField(articleJson, "headline", "main"));
+            art.setByLine(getObjectField(articleJson, "byline", "original"));
+            //some article dates contain char-based zero-hour offset, instead of numbers
+            String dateString = articleJson.getString("pub_date");
+            if (dateString.endsWith("Z"))
+                mRawDatePattern = DATE_PATTERN2;
+            else
+                mRawDatePattern = DATE_PATTERN1;
+            art.setPublishedDate(parseDate(dateString));
             String[] imageData = parseMedia(articleJson);
             if (imageData != null && imageData.length == 2) {
                 art.setImageUrl(imageData[0]);
                 art.setImageCaption(imageData[1]);
             }
-            art.setArticleAbstract(articleJson.getString("lead_paragraph"));
+            if (!articleJson.isNull("lead_paragraph"))
+                art.setArticleAbstract(articleJson.getString("lead_paragraph"));
             art.setArticleUrl(articleJson.getString("web_url"));
             return art;
         } catch (JSONException e) {
             e.printStackTrace();
+            mErrorMsg = e.getMessage();
         }
         return null;
     }
 
-    private String[] parseMedia(JSONObject articleJson) {
+    @Override
+    protected String[] parseMedia(JSONObject articleJson) {
         try {
-            JSONArray mediaArray = articleJson.getJSONArray("multimedia");
-            if (mediaArray == null || mediaArray.length() == 0)
+            JSONArray mediaArray = getArray(articleJson, "multimedia");
+            if (mediaArray == null)
                 return null;
             for (int i = 0; i < mediaArray.length(); i++) {
                 JSONObject item = mediaArray.getJSONObject(i);
@@ -66,13 +103,14 @@ public class SearchArticles extends NytRequest {
                 String format = item.getString("subtype");
                 if (format != null && format.toLowerCase().contains(FORMAT_THUMB)) {
                     return new String[]{
-                            item.getString("url"),
-                            articleJson.getJSONObject("headline").getString("print_headline")
+                            NYT_FILE_HOST+item.getString("url"),
+                            getObjectField(articleJson, "headline", "print_headline")
                     };
                 }
             }
         } catch (JSONException e) {
             e.printStackTrace();
+            mErrorMsg = e.getMessage();
         }
         return null;
     }

@@ -9,21 +9,45 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Created by Michael Dontsov on 08.04.2017.
+ * Request for most-viewed articles
  */
 
 public class GetMostViewed extends NytRequest {
 
     public GetMostViewed() {
         mRawDatePattern = "yyyy-MM-dd";
-        mResultsKey = "results";
     }
 
     @Override
     public void execute(NytCallback callback, Object... params) {
         super.execute(callback, params);
         NytClient.getInstance().getMostViewed(responseCallback());
+    }
+
+    @Override
+    protected List<Article> parseJson(String jsonString) {
+        List<Article> articles;
+        try {
+            JSONArray items = getArray(new JSONObject(jsonString), "results");
+            if (items == null)
+                return null;
+            articles = new ArrayList<>();
+            for (int i = 0; i < items.length(); i++) {
+                Article art = parseItem(items.getJSONObject(i));
+                if (art != null)
+                    articles.add(art);
+            }
+            return articles;
+        }
+        catch (JSONException e){
+            e.printStackTrace();
+            mErrorMsg = e.getMessage();
+        }
+        return null;
     }
 
     @Override
@@ -43,19 +67,23 @@ public class GetMostViewed extends NytRequest {
             return art;
         } catch (JSONException e) {
             e.printStackTrace();
+            mErrorMsg = e.getMessage();
         }
         return null;
     }
 
-    private String[] parseMedia(JSONObject articleJson) {
+    @Override
+    protected String[] parseMedia(JSONObject articleJson) {
         try {
-            JSONObject media = articleJson.getJSONArray("media")
-                    .getJSONObject(0);
+            JSONArray mediaArray = getArray(articleJson, "media");
+            if (mediaArray == null)
+                return null;
+            JSONObject media = mediaArray.getJSONObject(0);
             String mediaType = media.getString("type");
             if (!TYPE_IMAGE.equalsIgnoreCase(mediaType))
                 return null;
-            JSONArray metadata = media.getJSONArray("media-metadata");
-            if (metadata == null || metadata.length() == 0)
+            JSONArray metadata = getArray(media, "media-metadata");
+            if (metadata == null)
                 return null;
             for (int i = 0; i < metadata.length(); i++) {
                 JSONObject item = metadata.getJSONObject(i);
@@ -69,6 +97,7 @@ public class GetMostViewed extends NytRequest {
             }
         } catch (JSONException e) {
             e.printStackTrace();
+            mErrorMsg = e.getMessage();
         }
         return null;
     }

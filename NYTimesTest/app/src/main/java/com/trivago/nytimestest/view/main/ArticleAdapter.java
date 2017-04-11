@@ -10,7 +10,8 @@ import com.trivago.nytimestest.core.DataManager;
 import com.trivago.nytimestest.model.Article;
 
 /**
- * Created by Michael Dontsov on 08.04.2017.
+ * Adapter for articles list.
+ * To avoid redundant object refs - items acquired directly from DataManager according to page settings
  */
 
 public class ArticleAdapter extends RecyclerView.Adapter<ArticleViewHolder> {
@@ -40,26 +41,25 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleViewHolder> {
 
     public void loadNextPage(boolean reset) {
         if (reset) {
-            mItemCount = 0;
-            mMoreToLoad = true;
-            mCurrentPage = -1;
+            resetPage();
         }
-        boolean pageReady = DataManager.getInstance().loadPageAsync(mCurrentPage + 1);
-        if (pageReady) {
-            onPageLoaded(mCurrentPage + 1);
-        }
+        DataManager.getInstance().loadPageAsync(mCurrentPage + 1);
     }
 
-    public void onPageLoaded(int page) {
-        int count = DataManager.getInstance().getPage(page);
-        if (count == 0) {
-            mMoreToLoad = false;
+    public void onPageLoaded() {
+        int itemCount = DataManager.getInstance().getPage(mCurrentPage + 1);
+        mMoreToLoad = itemCount == DataManager.PAGE_SIZE;
+        if (itemCount == 0) {
             return;
         }
         mCurrentPage++;
-        mMoreToLoad = count == DataManager.PAGE_SIZE;
-        int startItem = mItemCount;
-        mItemCount += count;
-        notifyItemRangeInserted(startItem, count);
+        mItemCount += itemCount;
+        notifyDataSetChanged();
+    }
+
+    public void resetPage() {
+        mCurrentPage = -1;
+        mItemCount = 0;
+        mMoreToLoad = true;
     }
 }

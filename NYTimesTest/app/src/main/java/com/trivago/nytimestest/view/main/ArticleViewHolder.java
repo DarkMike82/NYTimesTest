@@ -9,7 +9,7 @@ import com.trivago.nytimestest.BR;
 import com.trivago.nytimestest.model.Article;
 
 /**
- * Created by Michael Dontsov on 08.04.2017.
+ * View holder for Article item
  */
 
 public class ArticleViewHolder extends RecyclerView.ViewHolder {
@@ -20,11 +20,15 @@ public class ArticleViewHolder extends RecyclerView.ViewHolder {
         binding = DataBindingUtil.bind(itemView);
     }
 
-    public void setData(Article article) {
+    public void setData(final Article article) {
         binding.setVariable(BR.article, article);
         binding.executePendingBindings();
-        //TODO check OnClickListener
-        ArticleFragment f = ArticleFragment.newInstance(article.getArticleUrl());
-        ((MainActivity)itemView.getContext()).StartFragment(f);
+        itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ArticleFragment f = ArticleFragment.newInstance(article.getArticleUrl());
+                ((MainActivity)itemView.getContext()).StartFragment(f);
+            }
+        });
     }
 }

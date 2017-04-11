@@ -13,35 +13,45 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:padding="@dimen/margin0">
         <ImageView
             android:id="@+id/img_article"
-            android:layout_width="@dimen/thumb_size"
-            android:layout_height="@dimen/thumb_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"/>
+            android:layout_alignParentLeft="true"
+            android:layout_marginRight="@dimen/margin0"
+            app:imageUrl="@{article.imageUrl}"
+            android:visibility="@{article.imageUrl == null  ? View.GONE : View.VISIBLE}"/>
         <LinearLayout
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@+id/img_article"
+            android:layout_marginBottom="@dimen/margin0"
             android:orientation="vertical">
             <TextView
                 android:id="@+id/txt_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@{article.title}"/>
+                android:text="@{article.title}"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:visibility="@{article.title == null  ? View.GONE : View.VISIBLE}"/>
             <TextView
                 android:id="@+id/txt_date"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@{article.publishedDate}" />
+                android:text="@{article.publishedDate}"
+                android:visibility="@{article.publishedDate == null  ? View.GONE : View.VISIBLE}"/>
             <TextView
                 android:id="@+id/txt_byline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@{article.byLine}" />
+                android:text="@{article.byLine}"
+                android:visibility="@{article.byLine == null  ? View.GONE : View.VISIBLE}" />
         </LinearLayout>
         <TextView
             android:id="@+id/txt_abstract"
@@ -49,6 +59,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_below="@+id/title"
-            android:text="@{article.articleAbstract}"/>
+            android:text="@{article.articleAbstract}"
+            android:textColor="@android:color/black"
+            android:visibility="@{article.articleAbstract == null  ? View.GONE : View.VISIBLE}"/>
     </RelativeLayout>
 </layout>

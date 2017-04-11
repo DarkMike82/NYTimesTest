@@ -10,7 +10,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 /**
- * Created by Michael Dontsov on 08.04.2017.
+ * Web-client for NYT API requests
  */
 
 public class NytClient {
@@ -69,7 +69,7 @@ public class NytClient {
     }
 
     /**
-     * format raw name-value pair into valid URL param
+     * Format raw name-value pair into valid URL param
      * @param first
      * @param name
      * @param value
